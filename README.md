@@ -59,14 +59,82 @@ npm install
 npm start
 ```
 
-### Docker Build
+### Docker Build & Run
+
+#### Option 1: Using Docker Compose (Recommended - Easiest)
+
+This will build and run both frontend and backend together:
 
 ```bash
-# Build backend
+# Build and start all services
+docker-compose up --build
+
+# Run in detached mode (background)
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+
+# Stop and remove volumes
+docker-compose down -v
+```
+
+**Access the application:**
+- Frontend: http://localhost:80
+- Backend API: http://localhost:5000
+
+#### Option 2: Build Individual Images
+
+```bash
+# Build backend image
 docker build -t sales-backend ./backend
 
-# Build frontend
+# Build frontend image
 docker build -t sales-frontend ./frontend
+```
+
+#### Option 3: Run Individual Containers
+
+```bash
+# Run backend container
+docker run -d \
+  --name sales-backend \
+  -p 5000:5000 \
+  -e NODE_ENV=production \
+  -e PORT=5000 \
+  sales-backend
+
+# Run frontend container (after backend is running)
+docker run -d \
+  --name sales-frontend \
+  -p 80:80 \
+  -e REACT_APP_API_URL=http://localhost:5000 \
+  sales-frontend
+```
+
+**Useful Docker commands:**
+```bash
+# List running containers
+docker ps
+
+# View container logs
+docker logs sales-backend
+docker logs sales-frontend
+
+# Stop containers
+docker stop sales-backend sales-frontend
+
+# Remove containers
+docker rm sales-backend sales-frontend
+
+# Remove images
+docker rmi sales-backend sales-frontend
+
+# View all images
+docker images
 ```
 
 ### Kubernetes Deployment
@@ -116,8 +184,10 @@ kubectl get pods -n sales-tracking
 - [x] Git tagging automation
 - [x] Docker image versioning
 - [x] Release scripts
+- [x] Docker Hub integration
+- [x] Automated GitHub releases
 
-**See**: `scripts/create-release.sh`, `.github/workflows/cd.yml`
+**See**: `scripts/create-release.sh`, `scripts/create-release.ps1`, `.github/workflows/cd.yml`, `docs/RELEASE_SETUP_GUIDE.md`
 
 ### ✅ Phase 6: Deploy
 - [x] Kubernetes manifests
@@ -171,9 +241,12 @@ REACT_APP_API_URL=http://backend-service:5000
 ### GitHub Secrets
 
 Required secrets for CI/CD:
-- `GITHUB_TOKEN`: For GitHub Container Registry
-- `KUBECONFIG_STAGING`: Base64 encoded kubeconfig for staging
-- `KUBECONFIG_PRODUCTION`: Base64 encoded kubeconfig for production
+- `DOCKER_USERNAME`: Your Docker Hub username
+- `DOCKER_PASSWORD`: Docker Hub access token (create at https://hub.docker.com/settings/security)
+- `KUBECONFIG_STAGING`: Base64 encoded kubeconfig for staging (optional)
+- `KUBECONFIG_PRODUCTION`: Base64 encoded kubeconfig for production (optional)
+
+**See**: `docs/RELEASE_SETUP_GUIDE.md` for detailed setup instructions
 
 ### Kubernetes Secrets
 
@@ -234,13 +307,31 @@ Merges to `develop` branch automatically deploy to staging.
 
 Tagged releases (`v*`) automatically deploy to production:
 
+**Linux/Mac:**
 ```bash
 # Create release
 ./scripts/create-release.sh patch
 
-# Push tag
+# Push commits and tag
+git push origin main
 git push origin v1.0.1
 ```
+
+**Windows (PowerShell):**
+```powershell
+# Create release
+.\scripts\create-release.ps1 -VersionType patch
+
+# Push commits and tag
+git push origin main
+git push origin v1.0.1
+```
+
+**What happens automatically:**
+1. GitHub Actions builds Docker images
+2. Images are pushed to Docker Hub with version tags
+3. GitHub Release is created automatically
+4. Production deployment triggers (if configured)
 
 ## 🔄 CI/CD Pipeline
 
@@ -322,7 +413,70 @@ This project is for educational purposes as part of a CAT (Computer Applications
 - GitHub Actions for CI/CD
 - Docker for containerization
 
+## 🎯 What's Next?
+
+All 8 phases of the DevOps pipeline are complete! Here's what to do next:
+
+### Immediate Next Steps
+
+1. **Review Completion Status**
+   - Check `docs/COMPLETION_CHECKLIST.md` for detailed status
+   - Verify all phases are implemented
+
+2. **Set Up Infrastructure**
+   - Follow `docs/IMPLEMENTATION_GUIDE.md` for step-by-step setup
+   - Choose your Kubernetes platform (local or cloud)
+   - Configure GitHub secrets and branch protection
+
+3. **Test the Pipeline**
+   - Push code and verify CI runs
+   - Test Docker builds locally
+   - Deploy to Kubernetes
+   - Verify monitoring works
+
+4. **Finalize Documentation**
+   - Update README with actual values
+   - Add screenshots
+   - Create presentation materials
+
+### Implementation Priority
+
+**High Priority:**
+- [ ] Set up Kubernetes cluster (local or cloud)
+- [ ] Configure GitHub secrets
+- [ ] Test CI/CD pipeline end-to-end
+- [ ] Deploy application to Kubernetes
+
+**Medium Priority:**
+- [ ] Set up monitoring (Prometheus/Grafana)
+- [ ] Configure logging (ELK stack)
+- [ ] Test scaling and alerts
+- [ ] Create demo/presentation
+
+**Low Priority:**
+- [ ] Optimize performance
+- [ ] Add advanced features
+- [ ] Production hardening
+
+### Quick Links
+
+- **Completion Checklist**: [`docs/COMPLETION_CHECKLIST.md`](docs/COMPLETION_CHECKLIST.md)
+- **Implementation Guide**: [`docs/IMPLEMENTATION_GUIDE.md`](docs/IMPLEMENTATION_GUIDE.md)
+- **Troubleshooting**: [`docs/DOCKER_BUILD_TROUBLESHOOTING.md`](docs/DOCKER_BUILD_TROUBLESHOOTING.md)
+- **Setup Instructions**: [`docs/SETUP_INSTRUCTIONS.md`](docs/SETUP_INSTRUCTIONS.md)
+
+### Estimated Time to Full Implementation
+
+- **Basic Setup**: 1-2 hours
+- **Kubernetes Deployment**: 30 minutes
+- **Monitoring Setup**: 30 minutes
+- **Testing & Validation**: 1 hour
+- **Documentation**: 30 minutes
+
+**Total**: ~3-4 hours for complete implementation
+
 ---
 
 **Last Updated**: 2024  
-**Version**: 1.0.0
+**Version**: 1.0.0  
+**Status**: ✅ All 8 Phases Complete - Ready for Implementation

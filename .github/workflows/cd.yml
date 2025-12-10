@@ -18,9 +18,10 @@ on:
 
 env:
   NODE_VERSION: '18'
-  REGISTRY: ghcr.io
-  BACKEND_IMAGE: ${{ github.repository }}/backend
-  FRONTEND_IMAGE: ${{ github.repository }}/frontend
+  REGISTRY: docker.io
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/sales-backend
+  FRONTEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/sales-frontend
 
 jobs:
   # Build and Push Docker Images
@@ -43,12 +44,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Container Registry
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       # Backend Image
       - name: Extract metadata for backend
@@ -57,12 +57,11 @@ jobs:
         with:
           images: ${{ env.BACKEND_IMAGE }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
+            type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,enable={{is_default_branch}}
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
@@ -82,12 +81,11 @@ jobs:
         with:
           images: ${{ env.FRONTEND_IMAGE }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
+            type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,enable={{is_default_branch}}
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -125,13 +123,13 @@ jobs:
       - name: Deploy backend to staging
         run: |
           export KUBECONFIG=./kubeconfig
-          kubectl set image deployment/backend backend=${{ env.BACKEND_IMAGE }}:${{ github.sha }} -n staging
+          kubectl set image deployment/backend backend=${{ env.BACKEND_IMAGE }}:latest -n staging
           kubectl rollout status deployment/backend -n staging
 
       - name: Deploy frontend to staging
         run: |
           export KUBECONFIG=./kubeconfig
-          kubectl set image deployment/frontend frontend=${{ env.FRONTEND_IMAGE }}:${{ github.sha }} -n staging
+          kubectl set image deployment/frontend frontend=${{ env.FRONTEND_IMAGE }}:latest -n staging
           kubectl rollout status deployment/frontend -n staging
 
       - name: Run smoke tests
@@ -162,16 +160,26 @@ jobs:
           echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > kubeconfig
           export KUBECONFIG=./kubeconfig
 
+      - name: Extract version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
       - name: Deploy backend to production
         run: |
           export KUBECONFIG=./kubeconfig
-          kubectl set image deployment/backend backend=${{ env.BACKEND_IMAGE }}:${{ needs.build-and-push.outputs.version }} -n production
+          VERSION=${{ steps.version.outputs.version || 'latest' }}
+          kubectl set image deployment/backend backend=${{ env.BACKEND_IMAGE }}:$VERSION -n production
           kubectl rollout status deployment/backend -n production
 
       - name: Deploy frontend to production
         run: |
           export KUBECONFIG=./kubeconfig
-          kubectl set image deployment/frontend frontend=${{ env.FRONTEND_IMAGE }}:${{ needs.build-and-push.outputs.version }} -n production
+          VERSION=${{ steps.version.outputs.version || 'latest' }}
+          kubectl set image deployment/frontend frontend=${{ env.FRONTEND_IMAGE }}:$VERSION -n production
           kubectl rollout status deployment/frontend -n production
 
       - name: Run smoke tests
@@ -182,16 +190,28 @@ jobs:
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: |
-            ## Changes
-            - Backend: ${{ env.BACKEND_IMAGE }}:${{ needs.build-and-push.outputs.version }}
-            - Frontend: ${{ env.FRONTEND_IMAGE }}:${{ needs.build-and-push.outputs.version }}
+            ## 🚀 Release ${{ github.ref_name }}
+            
+            ### Docker Images (Docker Hub)
+            - **Backend**: `${{ env.BACKEND_IMAGE }}:${{ steps.version.outputs.version }}`
+            - **Frontend**: `${{ env.FRONTEND_IMAGE }}:${{ steps.version.outputs.version }}`
+            
+            ### Pull Commands
+            ```bash
+            docker pull ${{ env.BACKEND_IMAGE }}:${{ steps.version.outputs.version }}
+            docker pull ${{ env.FRONTEND_IMAGE }}:${{ steps.version.outputs.version }}
+            ```
+            
+            ### Latest Tags
+            ```bash
+            docker pull ${{ env.BACKEND_IMAGE }}:latest
+            docker pull ${{ env.FRONTEND_IMAGE }}:latest
+            ```
           draft: false
           prerelease: false
 

@@ -2,124 +2,173 @@ import React, { useState, useEffect } from "react";
 import { API_URL } from "../config";
 
 const EditSale = ({ sale, onClose, onSave }) => {
-  const [product, setProduct] = useState("");
-  const [amount, setAmount] = useState("");
+  const [formData, setFormData] = useState({
+    product: "",
+    amount: "",
+    customer: "",
+    date: ""
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (sale) {
-      setProduct(sale.product);
-      setAmount(sale.amount);
+      const saleDate = sale.date ? new Date(sale.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      setFormData({
+        product: sale.product || "",
+        amount: sale.amount || "",
+        customer: sale.customer || "",
+        date: saleDate
+      });
     }
   }, [sale]);
 
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    setError("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    if (!formData.product || !formData.amount) {
+      setError("Product and Amount are required");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch(`${API_URL}/sales/${sale.id}`, {
+      const response = await fetch(`${API_URL}/sales/${sale.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product, amount }),
+        body: JSON.stringify({
+          product: formData.product,
+          amount: parseFloat(formData.amount),
+          customer: formData.customer || "Unknown",
+          date: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString()
+        }),
       });
-      if (res.ok) {
-        onSave();   // refresh list
-        onClose();  // close modal
-      } else {
-        alert("Failed to update sale");
+
+      if (!response.ok) {
+        throw new Error("Failed to update sale");
       }
+
+      onSave();
     } catch (err) {
+      setError(err.message || "Failed to update sale. Please try again.");
       console.error("Error updating sale:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      backgroundColor: "rgba(0,0,0,0.5)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 1000
-    }}>
-      <form 
-        onSubmit={handleSubmit} 
-        style={{
-          background: "#fff",
-          padding: "30px",
-          borderRadius: "10px",
-          minWidth: "350px",
-          boxShadow: "0 0 10px rgba(0,0,0,0.3)"
-        }}
-      >
-        <h3 style={{ marginBottom: "20px", textAlign: "center" }}>Edit Sale</h3>
-
-        <input
-          type="text"
-          value={product}
-          onChange={(e) => setProduct(e.target.value)}
-          placeholder="Product"
-          required
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "15px",
-            borderRadius: "5px",
-            border: "1px solid #ccc"
-          }}
-        />
-
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Amount"
-          required
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "20px",
-            borderRadius: "5px",
-            border: "1px solid #ccc"
-          }}
-        />
-
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <button
-            type="submit"
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#28a745",
-              color: "#fff",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer"
-            }}
-          >
-            Save
-          </button>
-
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#6c757d",
-              color: "#fff",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer"
-            }}
-          >
-            Cancel
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className="modal-title">Edit Sale #{sale.id}</h3>
+          <button className="modal-close" onClick={onClose} title="Close">
+            ✕
           </button>
         </div>
-      </form>
+
+        {error && (
+          <div className="alert alert-error">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="sale-form">
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="edit-product" className="form-label">
+                Product Name <span className="required">*</span>
+              </label>
+              <input
+                type="text"
+                id="edit-product"
+                name="product"
+                value={formData.product}
+                onChange={handleChange}
+                placeholder="Enter product name"
+                className="form-input"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="edit-amount" className="form-label">
+                Amount ($) <span className="required">*</span>
+              </label>
+              <input
+                type="number"
+                id="edit-amount"
+                name="amount"
+                value={formData.amount}
+                onChange={handleChange}
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                className="form-input"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="edit-customer" className="form-label">
+                Customer Name
+              </label>
+              <input
+                type="text"
+                id="edit-customer"
+                name="customer"
+                value={formData.customer}
+                onChange={handleChange}
+                placeholder="Enter customer name"
+                className="form-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="edit-date" className="form-label">
+                Sale Date
+              </label>
+              <input
+                type="date"
+                id="edit-date"
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
+                className="form-input"
+              />
+            </div>
+          </div>
+
+          <div className="form-actions">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-success"
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "💾 Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
 
 export default EditSale;
-
