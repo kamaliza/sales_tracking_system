@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: sales-tracking
+
+resources:
+  - namespace.yaml
+  - backend/deployment.yaml
+  - backend/service.yaml
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+  - ingress.yaml
+  - hpa/backend-hpa.yaml
+  - hpa/frontend-hpa.yaml
+  - pdb/backend-pdb.yaml
+  - pdb/frontend-pdb.yaml
+
+commonLabels:
+  app: sales-tracking
+  managed-by: kustomize
+

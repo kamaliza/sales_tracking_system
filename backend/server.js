@@ -10,6 +10,16 @@ app.get('/', (req, res) => {
   res.send('Sales Tracking Backend is running!');
 });
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Sales routes
 let sales = [];
 

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sales-tracking
+  labels:
+    name: sales-tracking
+    environment: production
+

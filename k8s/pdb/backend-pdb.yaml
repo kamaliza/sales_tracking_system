@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: backend-pdb
+  namespace: sales-tracking
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: backend
+

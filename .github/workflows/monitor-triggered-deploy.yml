@@ -1,0 +1,102 @@
+name: Monitor-Triggered Deployment
+
+on:
+  repository_dispatch:
+    types: [monitor-alert]
+  workflow_dispatch:
+    inputs:
+      alert_type:
+        description: 'Type of alert'
+        required: true
+        type: choice
+        options:
+          - high-error-rate
+          - high-cpu
+          - pod-crash-loop
+          - deployment-failed
+
+jobs:
+  analyze-alert:
+    name: Analyze Alert
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Analyze alert type
+        id: analyze
+        run: |
+          ALERT_TYPE="${{ github.event.inputs.alert_type || github.event.client_payload.alert_type }}"
+          echo "alert_type=$ALERT_TYPE" >> $GITHUB_OUTPUT
+          echo "Alert type: $ALERT_TYPE"
+
+  scale-up:
+    name: Scale Up Resources
+    runs-on: ubuntu-latest
+    needs: analyze-alert
+    if: github.event.inputs.alert_type == 'high-cpu' || github.event.client_payload.alert_type == 'high-cpu'
+    
+    steps:
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > kubeconfig
+          export KUBECONFIG=./kubeconfig
+
+      - name: Scale up backend
+        run: |
+          export KUBECONFIG=./kubeconfig
+          kubectl scale deployment backend --replicas=5 -n sales-tracking
+          echo "Scaled backend to 5 replicas"
+
+      - name: Scale up frontend
+        run: |
+          export KUBECONFIG=./kubeconfig
+          kubectl scale deployment frontend --replicas=3 -n sales-tracking
+          echo "Scaled frontend to 3 replicas"
+
+  rollback-deployment:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    needs: analyze-alert
+    if: github.event.inputs.alert_type == 'deployment-failed' || github.event.client_payload.alert_type == 'deployment-failed'
+    
+    steps:
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > kubeconfig
+          export KUBECONFIG=./kubeconfig
+
+      - name: Rollback backend
+        run: |
+          export KUBECONFIG=./kubeconfig
+          kubectl rollout undo deployment/backend -n sales-tracking
+          kubectl rollout status deployment/backend -n sales-tracking
+
+      - name: Rollback frontend
+        run: |
+          export KUBECONFIG=./kubeconfig
+          kubectl rollout undo deployment/frontend -n sales-tracking
+          kubectl rollout status deployment/frontend -n sales-tracking
+
+  notify-team:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    needs: [analyze-alert, scale-up, rollback-deployment]
+    if: always()
+    
+    steps:
+      - name: Notify on action taken
+        run: |
+          echo "Alert triggered automated response"
+          # Add Slack/Email notification here
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data '{"text":"Monitor alert triggered automated response"}' \
+          #   $SLACK_WEBHOOK_URL
+

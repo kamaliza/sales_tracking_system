@@ -1,70 +1,328 @@
-# Getting Started with Create React App
+# Sales Tracking System - DevOps Pipeline
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A complete DevOps pipeline implementation for a Node.js + React Sales Tracking System, covering all phases from planning to monitoring.
 
-## Available Scripts
+## 🚀 Project Overview
 
-In the project directory, you can run:
+This project demonstrates a comprehensive DevOps pipeline including:
+- CI/CD with GitHub Actions
+- Containerization with Docker
+- Kubernetes orchestration
+- Monitoring with Prometheus & Grafana
+- Logging with ELK Stack
+- Automated scaling and alerting
 
-### `npm start`
+## 📋 Table of Contents
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+- [DevOps Phases](#devops-phases)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🏗️ Architecture
 
-### `npm test`
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   GitHub    │────▶│ GitHub Actions│────▶│  Kubernetes │
+│  Repository │     │    CI/CD      │     │   Cluster   │
+└─────────────┘     └──────────────┘     └─────────────┘
+                            │                    │
+                            ▼                    ▼
+                    ┌──────────────┐     ┌─────────────┐
+                    │   Docker Hub │     │ Prometheus  │
+                    │   Registry   │     │   Grafana   │
+                    └──────────────┘     └─────────────┘
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🚦 Quick Start
 
-### `npm run build`
+### Prerequisites
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Node.js 18+
+- Docker & Docker Compose
+- Kubernetes cluster (minikube/kind/GKE/EKS/AKS)
+- kubectl configured
+- GitHub account
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Local Development
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+# Backend
+cd backend
+npm install
+npm start
 
-### `npm run eject`
+# Frontend (new terminal)
+cd frontend
+npm install
+npm start
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Docker Build
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+# Build backend
+docker build -t sales-backend ./backend
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Build frontend
+docker build -t sales-frontend ./frontend
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Kubernetes Deployment
 
-## Learn More
+```bash
+# Update image references in k8s manifests
+# Then deploy
+kubectl apply -k k8s/
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# Check status
+kubectl get pods -n sales-tracking
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 📚 DevOps Phases
 
-### Code Splitting
+### ✅ Phase 1: Plan
+- [x] DevOps roadmap documented
+- [x] Error budget policy defined
+- [x] Resource requirements calculated
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+**See**: `docs/DEVOPS_ROADMAP.md`, `docs/ERROR_BUDGET_POLICY.md`
 
-### Analyzing the Bundle Size
+### ✅ Phase 2: Code
+- [x] Git branching strategy (Git Flow)
+- [x] Pull request template
+- [x] Commit message standards (Conventional Commits)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+**See**: `docs/GIT_WORKFLOW.md`, `.github/PULL_REQUEST_TEMPLATE.md`
 
-### Making a Progressive Web App
+### ✅ Phase 3: Build
+- [x] Optimized multi-stage Dockerfiles
+- [x] GitHub Actions CI pipeline
+- [x] Automated builds on commit
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+**See**: `.github/workflows/ci.yml`, `backend/Dockerfile`, `frontend/Dockerfile`
 
-### Advanced Configuration
+### ✅ Phase 4: Test
+- [x] Unit tests (Jest)
+- [x] Integration tests (Supertest)
+- [x] Test coverage reporting
+- [x] Automated test execution
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+**See**: `backend/tests/`, `.github/workflows/ci.yml`
 
-### Deployment
+### ✅ Phase 5: Release
+- [x] Semantic versioning
+- [x] Git tagging automation
+- [x] Docker image versioning
+- [x] Release scripts
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+**See**: `scripts/create-release.sh`, `.github/workflows/cd.yml`
 
-### `npm run build` fails to minify
+### ✅ Phase 6: Deploy
+- [x] Kubernetes manifests
+- [x] Rolling update strategy
+- [x] Service and ingress configuration
+- [x] Resource limits
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**See**: `k8s/`, `k8s/README.md`
+
+### ✅ Phase 7: Operate
+- [x] Prometheus metrics collection
+- [x] Grafana dashboards
+- [x] ELK stack configuration
+- [x] Health check endpoints
+
+**See**: `monitoring/`, `logging/`
+
+### ✅ Phase 8: Monitor
+- [x] Horizontal Pod Autoscaler (HPA)
+- [x] Alerting rules
+- [x] Feedback loop (alerts trigger actions)
+- [x] Automated scaling
+
+**See**: `k8s/hpa/`, `monitoring/prometheus/alert-rules.yaml`, `docs/MONITORING_FEEDBACK_LOOP.md`
+
+## 📖 Documentation
+
+All documentation is in the `docs/` directory:
+
+- **[DevOps Roadmap](docs/DEVOPS_ROADMAP.md)**: Complete pipeline overview
+- **[Error Budget Policy](docs/ERROR_BUDGET_POLICY.md)**: SLO/SLI definitions
+- **[Resource Requirements](docs/RESOURCE_REQUIREMENTS.md)**: Kubernetes resource specs
+- **[Git Workflow](docs/GIT_WORKFLOW.md)**: Branching and commit standards
+- **[Monitoring Feedback Loop](docs/MONITORING_FEEDBACK_LOOP.md)**: Alert automation
+
+## 🔧 Configuration
+
+### Environment Variables
+
+**Backend** (`backend/.env`):
+```env
+NODE_ENV=production
+PORT=5000
+```
+
+**Frontend** (`frontend/.env`):
+```env
+REACT_APP_API_URL=http://backend-service:5000
+```
+
+### GitHub Secrets
+
+Required secrets for CI/CD:
+- `GITHUB_TOKEN`: For GitHub Container Registry
+- `KUBECONFIG_STAGING`: Base64 encoded kubeconfig for staging
+- `KUBECONFIG_PRODUCTION`: Base64 encoded kubeconfig for production
+
+### Kubernetes Secrets
+
+```bash
+# Create image pull secret
+kubectl create secret docker-registry ghcr-secret \
+  --docker-server=ghcr.io \
+  --docker-username=YOUR_USERNAME \
+  --docker-password=YOUR_TOKEN \
+  -n sales-tracking
+```
+
+## 🧪 Testing
+
+```bash
+# Backend tests
+cd backend
+npm test
+
+# Frontend tests
+cd frontend
+npm test
+
+# Integration tests
+cd backend
+npm test -- tests/integration.test.js
+```
+
+## 📊 Monitoring
+
+### Access Dashboards
+
+**Prometheus**:
+```bash
+kubectl port-forward svc/prometheus 9090:9090 -n sales-tracking
+# http://localhost:9090
+```
+
+**Grafana**:
+```bash
+kubectl port-forward svc/grafana 3000:3000 -n sales-tracking
+# http://localhost:3000 (admin/admin)
+```
+
+**Kibana**:
+```bash
+kubectl port-forward svc/kibana 5601:5601 -n sales-tracking
+# http://localhost:5601
+```
+
+## 🚢 Deployment
+
+### Staging
+
+Merges to `develop` branch automatically deploy to staging.
+
+### Production
+
+Tagged releases (`v*`) automatically deploy to production:
+
+```bash
+# Create release
+./scripts/create-release.sh patch
+
+# Push tag
+git push origin v1.0.1
+```
+
+## 🔄 CI/CD Pipeline
+
+### CI Pipeline (`.github/workflows/ci.yml`)
+
+Triggers on:
+- Push to `main` or `develop`
+- Pull requests
+
+Steps:
+1. Lint code
+2. Run tests
+3. Build Docker images
+4. Security scanning
+5. Upload coverage
+
+### CD Pipeline (`.github/workflows/cd.yml`)
+
+Triggers on:
+- Push to `main`
+- Tags starting with `v*`
+- Manual workflow dispatch
+
+Steps:
+1. Build and push images
+2. Deploy to staging
+3. Deploy to production (on tag)
+4. Create GitHub release
+
+## 📈 Scaling
+
+### Manual Scaling
+
+```bash
+kubectl scale deployment backend --replicas=5 -n sales-tracking
+```
+
+### Automatic Scaling (HPA)
+
+HPA automatically scales based on CPU/memory:
+- Backend: 2-10 pods
+- Frontend: 2-5 pods
+
+## 🐛 Troubleshooting
+
+### Pods not starting
+```bash
+kubectl describe pod <pod-name> -n sales-tracking
+kubectl logs <pod-name> -n sales-tracking
+```
+
+### CI/CD failures
+Check GitHub Actions logs: `Actions` tab in GitHub
+
+### Monitoring not working
+```bash
+# Check Prometheus targets
+kubectl port-forward svc/prometheus 9090:9090 -n sales-tracking
+# Visit http://localhost:9090/targets
+```
+
+## 🤝 Contributing
+
+1. Create feature branch: `git checkout -b feature/my-feature`
+2. Make changes and commit: `git commit -m "feat: add feature"`
+3. Push and create PR: `git push origin feature/my-feature`
+4. Follow PR template guidelines
+
+See `docs/GIT_WORKFLOW.md` for detailed workflow.
+
+## 📝 License
+
+This project is for educational purposes as part of a CAT (Computer Applications Technology) practice assignment.
+
+## 🙏 Acknowledgments
+
+- Prometheus & Grafana for monitoring
+- Kubernetes for orchestration
+- GitHub Actions for CI/CD
+- Docker for containerization
+
+---
+
+**Last Updated**: 2024  
+**Version**: 1.0.0
