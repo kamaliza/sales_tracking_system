@@ -8,7 +8,9 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies (production only)
-RUN npm ci --only=production && npm cache clean --force
+# Using npm install to handle cases where package-lock.json might be out of sync
+# In production, ensure package-lock.json is committed and up-to-date
+RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
 
 # ---- Production Stage ----
 FROM node:18-alpine

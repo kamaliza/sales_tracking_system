@@ -8,7 +8,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci && npm cache clean --force
+# Using npm install to handle cases where package-lock.json might be out of sync
+RUN npm install --no-audit --no-fund && npm cache clean --force
 
 # Copy source code
 COPY . .
