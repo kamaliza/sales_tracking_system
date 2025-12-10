@@ -148,7 +148,37 @@ jobs:
           # Add prettier check if configured
           # npx prettier --check "**/*.{js,jsx,json,md}" || true
 
- 
+  # Job 4: Dependency Audit
+  dependency-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        directory: [backend, frontend]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run npm audit
+        working-directory: ./${{ matrix.directory }}
+        run: |
+          npm audit --audit-level=moderate || true
+          npm audit --json > audit-report-${{ matrix.directory }}.json || true
+
+      - name: Upload audit reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: audit-report-${{ matrix.directory }}
+          path: ${{ matrix.directory }}/audit-report-${{ matrix.directory }}.json
+        continue-on-error: true
+
   # Job 5: Security Scanning
   security-scan:
     name: Security Scan (Trivy)
@@ -388,6 +418,42 @@ jobs:
           echo "Running code smell detection..."
           # Add custom code smell checks here
           echo "Code analysis completed"
+
+  # Job 12: Build Artifacts
+  build-artifacts:
+    name: Build Artifacts
+    runs-on: ubuntu-latest
+    needs: [backend-ci, frontend-ci]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build backend
+        working-directory: ./backend
+        run: |
+          npm install
+          npm test -- --coverage --watchAll=false
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npm install
+          npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            frontend/build
+            backend/coverage
+          retention-days: 7
 
   # Job 13: E2E Tests (Placeholder)
   e2e-tests:
