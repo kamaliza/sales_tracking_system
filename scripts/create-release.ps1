@@ -48,12 +48,15 @@ Write-Host "Updating version in package.json files..." -ForegroundColor Yellow
 
 # Update backend package.json
 $backendPackageJson.version = $newVersion
-$backendPackageJson | ConvertTo-Json -Depth 10 | Set-Content "backend\package.json" -Encoding UTF8
+$jsonContent = $backendPackageJson | ConvertTo-Json -Depth 10
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText("$PWD\backend\package.json", $jsonContent, $utf8NoBom)
 
 # Update frontend package.json
 $frontendPackageJson = Get-Content "frontend\package.json" | ConvertFrom-Json
 $frontendPackageJson.version = $newVersion
-$frontendPackageJson | ConvertTo-Json -Depth 10 | Set-Content "frontend\package.json" -Encoding UTF8
+$jsonContent = $frontendPackageJson | ConvertTo-Json -Depth 10
+[System.IO.File]::WriteAllText("$PWD\frontend\package.json", $jsonContent, $utf8NoBom)
 
 # Update CHANGELOG.md
 Write-Host "Updating CHANGELOG.md..." -ForegroundColor Yellow
