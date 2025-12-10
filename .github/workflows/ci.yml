@@ -34,7 +34,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run linter
         run: npm run lint || echo "Linter not configured, skipping..."
@@ -51,8 +51,9 @@ jobs:
         continue-on-error: true
 
       - name: Build Docker image
+        working-directory: ./
         run: |
-          docker build -t ${{ env.BACKEND_IMAGE }}:${{ github.sha }} -t ${{ env.BACKEND_IMAGE }}:latest ./backend
+          docker build -t ${{ env.BACKEND_IMAGE }}:${{ github.sha }} -t ${{ env.BACKEND_IMAGE }}:latest -f backend/Dockerfile backend
 
       - name: Test Docker image size
         run: |
@@ -82,7 +83,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run linter
         run: npm run lint || echo "Linter not configured, skipping..."
@@ -102,8 +103,9 @@ jobs:
         run: npm run build
 
       - name: Build Docker image
+        working-directory: ./
         run: |
-          docker build -t ${{ env.FRONTEND_IMAGE }}:${{ github.sha }} -t ${{ env.FRONTEND_IMAGE }}:latest ./frontend
+          docker build -t ${{ env.FRONTEND_IMAGE }}:${{ github.sha }} -t ${{ env.FRONTEND_IMAGE }}:latest -f frontend/Dockerfile frontend
 
       - name: Test Docker image size
         run: |
@@ -135,7 +137,7 @@ jobs:
       - name: Run integration tests
         run: |
           cd backend
-          npm ci
+          npm install
           npm test -- tests/integration.test.js || echo "Integration tests not yet implemented"
 
       - name: Cleanup
